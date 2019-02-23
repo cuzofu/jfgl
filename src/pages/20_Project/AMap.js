@@ -19,13 +19,14 @@ const replaceAllSlash = (path, toStr = '_') => path.replace(/\//g, toStr);
 
 // import styles from './SampleList.less';
 
+export default
 @connect(({ project, panes, loading }) => ({
   project,
   panes,
   loading: loading.models.project,
 }))
 @Form.create()
-export default class AMap extends PureComponent {
+class AMap extends PureComponent {
   componentDidMount() {
     const {
       dispatch,

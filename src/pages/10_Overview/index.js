@@ -1,28 +1,139 @@
 import React, { Component } from 'react';
-import { Row, Col, Card, Tabs } from 'antd';
+import { connect } from 'dva';
+import { Row, Col, Card, Empty } from 'antd';
+import numeral from 'numeral';
 import GridContent from '@/components/PageHeaderWrapper/GridContent';
+import {
+  Pie,
+} from '@/components/Charts';
+import NumberInfo from '@/components/NumberInfo';
+import Result from '@/components/Result';
+
+import ScatterChart from '../99_components/ScatterChart';
 
 import styles from './index.less';
 
+@connect(({ ov, loading }) => ({
+  ov,
+  loading: loading.models.ov,
+}))
 class HomePage extends Component {
   state = {
-    loading: true,
   };
 
   componentDidMount() {
-    this.timeoutId = setTimeout(() => {
-      this.setState({
-        loading: false,
-      });
-    }, 600);
+    const {
+      dispatch,
+    } = this.props;
+    dispatch({
+      type: 'ov/fetchTzxmzlData',
+      payload: {},
+    });
+    dispatch({
+      type: 'ov/fetchZlaqjcData',
+      payload: {},
+    });
   }
 
   componentWillUnmount() {
-    clearTimeout(this.timeoutId);
   }
 
+  // 总览
+  renderOverview = () => {
+    const {
+      loading,
+      ov: {
+        tzxmzl: {
+          tzze, // 投资总额
+          zjxm, // 在建项目数
+          jgxm, // 竣工项目数
+          tgxm, // 停工项目数
+          cbxm, // 筹备中
+        },
+      }
+    } = this.props;
+    return (
+      <Card loading={loading} bordered={false} bodyStyle={{ height: 500, padding: 10 }}>
+        <Card.Meta
+          title="总览"
+          description={(
+            <Row gutter={12}>
+              <Col span={6}>
+                <NumberInfo
+                  subTitle={<span>投资总额</span>}
+                  total={`${numeral(tzze).format('0,0')}元`}
+                />
+              </Col>
+              <Col span={5}>
+                <NumberInfo
+                  subTitle={<span>在建项目</span>}
+                  total={`${numeral(zjxm).format('0,0')}个`}
+                />
+              </Col>
+              <Col span={5}>
+                <NumberInfo
+                  subTitle={<span>竣工项目</span>}
+                  total={`${numeral(jgxm).format('0,0')}个`}
+                />
+              </Col>
+              <Col span={4}>
+                <NumberInfo
+                  subTitle={<span>停工</span>}
+                  total={`${numeral(tgxm).format('0,0')}个`}
+                />
+              </Col>
+              <Col span={4}>
+                <NumberInfo
+                  subTitle={<span>筹备中</span>}
+                  total={`${numeral(cbxm).format('0,0')}个`}
+                />
+              </Col>
+            </Row>
+          )}
+        />
+      </Card>
+    );
+  };
+
+  // 质量安全监测
+  renderZlaqjc = () => {
+    const {
+      loading,
+      ov: {
+        zlaqjc: {
+          zl = 0,
+          aq = 0,
+        }
+      }
+    } = this.props;
+    const zlPercent = zl === 0 ? 0 : (zl / (zl + aq) * 100).toFixed(2);
+    const aqPercent = aq === 0 ? 0 : (aq / (zl + aq) * 100).toFixed(2);
+    return (
+      <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+        <Card.Meta
+          title="质量安全监测"
+          description={(
+            <Row>
+              <Col span={12}>
+                <Pie percent={zlPercent} subTitle="质量问题" total={`${zlPercent}%`} height={180} />
+              </Col>
+              <Col span={12}>
+                <Pie percent={aqPercent} subTitle="安全问题" total={`${aqPercent}%`} height={180} color="yellow" />
+              </Col>
+            </Row>
+          )}
+        />
+      </Card>
+    );
+  };
+
   render() {
-    const { loading } = this.state;
+    const {
+      loading,
+      ov: {
+        tzxmzl,
+      }
+    } = this.props;
 
     const topColResponsiveProps = {
       xs: 24,
@@ -35,68 +146,83 @@ class HomePage extends Component {
 
     return (
       <GridContent>
-        <Row gutter={24}>
-          <Col {...topColResponsiveProps}>
-            <Card loading={loading}>
-              <Card.Meta
-                title="Card A"
-                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec molestie est. Cras porta, justo ut accumsan cursus, velit justo lobortis lacus neque a risus."
-              />
-            </Card>
-          </Col>
-          <Col {...topColResponsiveProps}>
-            <Card loading={loading}>
-              <Card.Meta
-                title="Card B"
-                description="Nam nec massa vel odio vulputate malesuada. Maecenas blandit ligula eu leo dictum pharetra. Nunc nec lorem in augue venenatis rhoncus ac eu urna."
-              />
-            </Card>
-          </Col>
-          <Col {...topColResponsiveProps}>
-            <Card loading={loading}>
-              <Card.Meta
-                title="Card C"
-                description="Aliquam a lectus a velit viverra rhoncus at eu sem. Aliquam diam urna, aliquet sed nisl vitae, suscipit lobortis justo. Nunc rhoncus placerat viverra."
-              />
-            </Card>
-          </Col>
-        </Row>
+        <div>
+          <Row gutter={12}>
+            <Col span={14}>
+              {this.renderOverview()}
+            </Col>
+            <Col span={10}>
+              <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                <Card.Meta
+                  title="投资分布"
+                  description={(
+                    <ScatterChart height={220} />
+                  )}
+                />
+              </Card>
+              <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                <Card.Meta
+                  title="进度总览"
+                  description={(
+                    <Empty />
+                  )}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </div>
+        <div style={{marginTop: 12}}>
+          <Row gutter={12}>
+            <Col span={14}>
+              <Row gutter={12}>
+                <Col span={12} style={{marginBottom: 12}}>
+                  {this.renderZlaqjc()}
+                </Col>
+                <Col span={12} style={{marginBottom: 12}}>
+                  <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                    <Card.Meta
+                      title="施工图审查"
+                      description={(
+                        <Empty />
+                      )}
+                    />
+                  </Card>
+                </Col>
+                <Col span={12} style={{marginBottom: 12}}>
+                  <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                    <Card.Meta
+                      title="工程检测（不合格报告）"
+                      description={(
+                        <Empty />
+                      )}
+                    />
+                  </Card>
+                </Col>
+                <Col span={12} style={{marginBottom: 12}}>
+                  <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                    <Card.Meta
+                      title="诚信动态"
+                      description={(
+                        <Empty />
+                      )}
+                    />
+                  </Card>
+                </Col>
+              </Row>
+            </Col>
+            <Col span={10}>
+              <Card loading={loading} bordered={false} bodyStyle={{ height: 250, padding: 10 }}>
+                <Card.Meta
+                  title="资金消耗"
+                  description={(
+                    <Empty />
+                  )}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </div>
 
-        <Card loading={loading} bordered={false} bodyStyle={{ padding: 0 }}>
-          <div className={styles.welcomeCard}>
-            <Tabs size="large" tabBarStyle={{ marginBottom: 24 }}>
-              <Tabs.TabPane tab="Intro" key="views">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam dolor arcu,
-                  eleifend vel euismod venenatis, facilisis quis nulla. Mauris ut leo a ipsum
-                  laoreet laoreet. Donec sodales nisi non pulvinar aliquam. Pellentesque imperdiet
-                  tellus ac orci hendrerit, vitae facilisis nisl consectetur. Morbi ac diam vitae
-                  tortor feugiat congue non quis felis. Mauris libero ex, volutpat vitae massa non,
-                  facilisis imperdiet leo. Maecenas venenatis lacinia porttitor. Vestibulum ut nisi
-                  bibendum, efficitur quam non, pretium nibh. Vestibulum sit amet libero erat.
-                </p>
-                <p>
-                  Nulla sagittis fermentum ipsum vitae eleifend. Suspendisse convallis a magna vel
-                  scelerisque. Sed at venenatis elit, ut molestie nunc. Duis gravida mattis cursus.
-                  Aliquam non mauris eu nulla varius fringilla. Quisque non purus arcu. Aenean
-                  finibus dolor lacus, eget pharetra nibh finibus vel. Curabitur consequat semper
-                  velit nec commodo. Morbi rutrum massa mauris, at maximus odio venenatis sit amet.
-                  Suspendisse potenti. Mauris ac turpis augue.
-                </p>
-                <p>
-                  Aenean aliquet tortor quis consectetur elementum. Donec vitae lacinia augue.
-                  Phasellus pellentesque tincidunt felis eget egestas. Duis lorem augue, dignissim
-                  eget bibendum eget, eleifend sit amet urna. Aenean faucibus ante tempor velit
-                  elementum, sit amet convallis magna consectetur. Donec mollis elementum velit, in
-                  consequat sem posuere quis. Integer eget viverra ex. Duis sed massa quis ante
-                  sollicitudin dictum eget ut erat. Nam at nisl turpis. Curabitur tempus et neque eu
-                  laoreet. Sed sed aliquet felis. Maecenas vel viverra augue. Vestibulum sit amet
-                  lorem at sem lobortis tristique.
-                </p>
-              </Tabs.TabPane>
-            </Tabs>
-          </div>
-        </Card>
       </GridContent>
     );
   }
