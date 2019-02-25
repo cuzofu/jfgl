@@ -3,7 +3,7 @@ import { connect } from 'dva';
 import Link from 'umi/link';
 import { Card, Form, Button } from 'antd';
 import GridContent from '@/components/PageHeaderWrapper/GridContent';
-
+import AMapWrapper from './AMapWrapper';
 import { matchParamsPath } from '@/utils/menuDataUtils';
 
 const tripLastSlash = path => {
@@ -68,18 +68,7 @@ class AMap extends PureComponent {
   render() {
     return (
       <GridContent>
-        <Card bordered={false}>
-          <Link to="/project/new">
-            <Button icon="plus" type="primary">
-              新建
-            </Button>
-          </Link>
-          <Link to="/project/edit/123">
-            <Button icon="edit">编辑</Button>
-          </Link>
-          <div>项目看板地图模式</div>
-          <Link to="/project/101">工程首页</Link>
-        </Card>
+        <AMapWrapper />
       </GridContent>
     );
   }
